@@ -56,6 +56,15 @@
   .top nav { display: flex; gap: 22px; font-size: 15px; }
   .top nav a { color: var(--text-2); text-decoration: none; }
   .top nav a:hover { color: var(--text); }
+  .top nav { align-items: center; }
+  .top nav a.star { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-weight: 500; border: 1px solid var(--line); background: var(--bg-2); border-radius: 6px; padding: 5px 10px; }
+  .top nav a.star:hover { border-color: var(--text-3); }
+  .star svg, .star-big svg { width: 15px; height: 15px; color: #e3b341; }
+  .star-count { color: var(--text-3); border-left: 1px solid var(--line); padding-left: 7px; margin-left: 1px; font-variant-numeric: tabular-nums; }
+  .star-count:empty { display: none; }
+  .star-big { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; color: var(--on-blue); background: var(--blue); border-radius: 6px; padding: 0 16px; height: 40px; text-decoration: none; margin-top: 4px; }
+  .star-big:hover { background: var(--blue-hover); color: var(--on-blue); }
+  .star-big svg { color: currentColor; }
 
   .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; padding: 72px 0 80px; align-items: start; }
   h1 { font-size: clamp(36px, 4.6vw, 50px); line-height: 1.1; letter-spacing: -.02em; font-weight: 700; margin: 0 0 18px; }
@@ -147,7 +156,7 @@
     <nav aria-label="Site">
       <a href="#install" class="hide-sm">Install</a>
       <a href="#access" class="hide-sm">What it can access</a>
-      <a href="https://github.com/Forrest404/read-moodle-skill">GitHub</a>
+      <a class="star" href="https://github.com/Forrest404/read-moodle-skill"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg><span>Star on GitHub</span><span class="star-count" data-stars></span></a>
     </nav>
   </header>
 
@@ -282,6 +291,12 @@
       </div>
       <p>Found a bug? <a href="https://github.com/Forrest404/read-moodle-skill/issues">Open an issue on GitHub</a>.</p>
     </section>
+
+    <section class="sec" aria-labelledby="h-star">
+      <h2 id="h-star">Useful?</h2>
+      <p>If it saved you some clicking, give it a star on GitHub. It's free, takes a second, and helps other students find it.</p>
+      <a class="star-big" href="https://github.com/Forrest404/read-moodle-skill"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg><span>Star on GitHub</span></a>
+    </section>
   </main>
 
   <footer>
@@ -291,6 +306,16 @@
 </div>
 
 <script>
+  // Live star count for the top-bar button. Shown only once there's at least one star; if GitHub's API doesn't answer, there's no number.
+  fetch("https://api.github.com/repos/Forrest404/read-moodle-skill")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (d && typeof d.stargazers_count === "number" && d.stargazers_count > 0) {
+        document.querySelectorAll("[data-stars]").forEach(function (el) { el.textContent = d.stargazers_count.toLocaleString(); });
+      }
+    })
+    .catch(function () {});
+
   (function () {
     var btn = document.getElementById("copy"), note = document.getElementById("copied");
     btn.addEventListener("click", function () {
