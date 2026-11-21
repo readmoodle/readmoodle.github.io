@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>read moodle skill</title>
+<meta name="description" content="Commands for your AI agent that read your Moodle for you: deadlines, briefs, readings, grades. Read-only. Made for UCL.">
+<meta name="color-scheme" content="light dark">
+<link rel="canonical" href="https://readmoodle.github.io/">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-2: #f6f6f6;
+    --text: #111111;
+    --text-2: #444444;
+    --text-3: #6b6b6b;
+    --line: #e5e5e5;
+    --blue: #1d5bd6;
+    --blue-hover: #1549b0;
+    --on-blue: #ffffff;
+    --term: #1e1e1e;
+    --term-text: #e6e6e6;
+    --term-dim: #9a9a9a;
+    --term-hi: #f5c26b;
+    --term-ok: #7cc48a;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121212;
+      --bg-2: #1c1c1c;
+      --text: #f2f2f2;
+      --text-2: #c4c4c4;
+      --text-3: #959595;
+      --line: #2c2c2c;
+      --blue: #6b9cff;
+      --blue-hover: #8ab0ff;
+      --on-blue: #0b1430;
+      --term: #0a0a0a;
+    }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 400 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+  a { color: var(--blue); text-underline-offset: 2px; }
+  a:hover { color: var(--blue-hover); }
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+  code { font: .88em/1.5 var(--mono); background: var(--bg-2); border: 1px solid var(--line); padding: .05em .35em; border-radius: 4px; overflow-wrap: anywhere; }
+
+  .page { max-width: 1040px; margin: 0 auto; padding: 0 32px; }
+
+  .top { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--line); }
+  .name { font-weight: 600; color: var(--text); text-decoration: none; }
+  .top nav { display: flex; gap: 22px; font-size: 15px; }
+  .top nav a { color: var(--text-2); text-decoration: none; }
+  .top nav a:hover { color: var(--text); }
+
+  .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; padding: 72px 0 80px; align-items: start; }
+  h1 { font-size: clamp(36px, 4.6vw, 50px); line-height: 1.1; letter-spacing: -.02em; font-weight: 700; margin: 0 0 18px; }
+  .lede { font-size: 19px; line-height: 1.55; color: var(--text-2); margin: 0 0 32px; }
+
+  .install-label { font-size: 14px; font-weight: 600; margin: 0 0 8px; }
+  .install-box { display: flex; gap: 12px; align-items: flex-start; background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px; padding: 14px 14px 14px 16px; }
+  .install-box pre { margin: 0; flex: 1; font: 14px/1.6 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .copy {
+    flex: none; font: 600 14px/1 var(--sans); color: var(--on-blue); background: var(--blue); border: 0; border-radius: 6px;
+    padding: 0 14px; height: 34px; cursor: pointer;
+  }
+  .copy:hover { background: var(--blue-hover); }
+  .install-note { font-size: 14.5px; color: var(--text-3); margin: 10px 0 0; }
+
+  .term { background: var(--term); color: var(--term-text); border-radius: 10px; font: 13px/1.7 var(--mono); overflow: hidden; border: 1px solid var(--line); }
+  .term-bar { display: flex; align-items: center; gap: 7px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .term-bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a3a3a; }
+  .term-bar span { margin-left: 8px; font-size: 12px; color: var(--term-dim); }
+  .term-body { padding: 16px 18px 20px; overflow-x: auto; }
+  .term-body p { margin: 0; white-space: pre; }
+  .t-prompt, .t-dim { color: var(--term-dim); }
+  .t-you { color: #fff; }
+  .t-dot { color: var(--term-ok); }
+  .t-hi { color: var(--term-hi); }
+  .t-b { color: #fff; font-weight: 600; }
+  .gap { height: .7em; }
+  .caption { font-size: 13.5px; color: var(--text-3); margin: 10px 0 0; }
+
+  section.sec { padding: 56px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 28px; line-height: 1.2; letter-spacing: -.01em; margin: 0 0 12px; }
+  .sec > p { max-width: 42em; color: var(--text-2); margin: 0 0 16px; }
+
+  .cmds { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  .cmds td { padding: 12px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  .cmds tr:last-child td { border-bottom: 1px solid var(--line); }
+  .cmds td:first-child { width: 260px; padding-right: 20px; }
+  .cmds td:last-child { color: var(--text-2); }
+
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: stretch; margin: 24px 0 20px; max-width: 760px; }
+  .node { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; background: var(--bg-2); }
+  .node b { display: block; font-size: 16px; }
+  .node span { display: block; font-size: 14.5px; color: var(--text-3); line-height: 1.45; margin-top: 2px; }
+  .arrow { align-self: center; color: var(--text-3); font-size: 20px; }
+
+  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 24px; }
+  .cols h3 { font-size: 16px; margin: 0 0 8px; }
+  .cols ul { margin: 0; padding-left: 18px; color: var(--text-2); font-size: 16px; }
+  .cols li { margin-bottom: 6px; }
+  .note { margin-top: 20px; }
+
+  .fine { margin: 16px 0 0; padding-left: 22px; max-width: 42em; color: var(--text-2); }
+  .fine li { margin-bottom: 8px; padding-left: 4px; }
+
+  .help { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 16px; }
+  .help h3 { font-size: 16px; margin: 0 0 6px; }
+  .help p { margin: 0 0 10px; color: var(--text-2); font-size: 16px; }
+
+  footer { border-top: 1px solid var(--line); padding: 24px 0 56px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--text-3); }
+  footer a { color: var(--text-3); }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; padding: 48px 0 56px; }
+    .cols, .help { grid-template-columns: 1fr; gap: 20px; }
+  }
+  @media (max-width: 600px) {
+    body { font-size: 16px; }
+    .page { padding: 0 16px; }
+    .top nav .hide-sm { display: none; }
+    .lede { font-size: 17.5px; }
+    h2 { font-size: 24px; }
+    .install-box { flex-direction: column; }
+    .copy { width: 100%; height: 44px; }
+    .term { font-size: 11.5px; }
+    .term-body { padding: 14px 12px 16px; }
+    .cmds td { display: block; border: 0; padding: 0; }
+    .cmds tr { display: block; padding: 12px 0; border-top: 1px solid var(--line); }
+    .cmds td:first-child { width: auto; margin-bottom: 2px; }
+    .flow { grid-template-columns: 1fr; }
+    .arrow { transform: rotate(90deg); justify-self: center; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="top">
+    <a class="name" href="./">read moodle skill</a>
+    <nav aria-label="Site">
+      <a href="#install" class="hide-sm">Install</a>
+      <a href="#access" class="hide-sm">What it can access</a>
+      <a href="https://github.com/Forrest404/read-moodle-skill">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="install">
+      <div>
+        <h1>Ask your AI agent what's on your Moodle.</h1>
+        <p class="lede">A few commands for your AI agent that read Moodle for you: what's due, what a brief is actually asking for, and what to read before your next seminar. Read-only, built for UCL.</p>
+
+        <p class="install-label">Paste this into your AI agent</p>
+        <div class="install-box">
+          <pre id="prompt">Install https://github.com/Forrest404/read-moodle-skill for me. Read SETUP.md and follow it step by step.</pre>
+          <button class="copy" type="button" id="copy">Copy</button>
+        </div>
+        <p class="install-note">Needs a Mac and an AI agent that can run commands on it, such as Claude Code or Codex. The agent does the setup; you log in to Moodle once. <span id="copied" aria-live="polite"></span></p>
+      </div>
+
+      <figure style="margin:0">
+        <div class="term" role="img" aria-label="Example: asking /brief case study in Claude Code returns the task, due date, format, marking criteria and things that are easy to miss.">
+          <div class="term-bar"><i></i><i></i><i></i><span>ai agent</span></div>
+          <div class="term-body">
+<p><span class="t-prompt">&gt; </span><span class="t-you">/brief case study</span></p>
+<div class="gap"></div>
+<p><span class="t-dot">●</span> <span class="t-dim">Read brief.pdf, criteria.docx</span></p>
+<div class="gap"></div>
+<p><span class="t-dot">●</span> <span class="t-b">Case Study Analysis</span> <span class="t-dim">· MEDI0004 · 40%</span></p>
+<p>  Due <span class="t-hi">Mon 14 Dec, 13:00</span> (in 23 days).</p>
+<p>  Not submitted yet.</p>
+<div class="gap"></div>
+<p>  <span class="t-b">Task</span>     1,200 words on one creative</p>
+<p>           organisation, using two concepts</p>
+<p>           from weeks 3 to 7.</p>
+<p>  <span class="t-b">Format</span>   Word or PDF, Harvard, cover</p>
+<p>           sheet first.</p>
+<p>  <span class="t-b">Marked</span>   argument 30 · concepts 30 ·</p>
+<p>           evidence 25 · presentation 15</p>
+<div class="gap"></div>
+<p>  <span class="t-b">Watch</span>    references don't count towards</p>
+<p>           the 1,200. No extensions</p>
+<p>           without EC.</p>
+          </div>
+        </div>
+        <figcaption class="caption">Example output. Module and details changed.</figcaption>
+      </figure>
+    </section>
+
+    <section class="sec" aria-labelledby="h-cmds">
+      <h2 id="h-cmds">Commands</h2>
+      <p>I made these because I was opening four module pages every week just to work out what was due and what to read. You can use the commands, or just ask in plain English, like "what do I need to read before Thursday?" Some agents start commands with <code>$</code> instead of <code>/</code>, for example <code>$today</code> in Codex.</p>
+      <table class="cmds">
+        <tr><td><code>/today</code></td><td>What's due, this week's sessions and readings, and new announcements.</td></tr>
+        <tr><td><code>/deadlines</code></td><td>Everything due in the next two weeks, and whether it's submitted.</td></tr>
+        <tr><td><code>/brief &lt;name&gt;</code></td><td>Reads the brief and marking criteria and tells you what to hand in.</td></tr>
+        <tr><td><code>/module &lt;code&gt; week 7</code></td><td>One module's week, with slides and readings.</td></tr>
+        <tr><td><code>/grades</code></td><td>Your marks and a summary of the feedback.</td></tr>
+        <tr><td><code>/plan</code></td><td>Breaks deadlines into steps and adds them to your calendar once you've checked them.</td></tr>
+        <tr><td><code>/assignments</code></td><td>Every assignment with dates and status.</td></tr>
+        <tr><td><code>/ask &lt;question&gt;</code></td><td>Anything else on Moodle.</td></tr>
+      </table>
+    </section>
+
+    <section class="sec" aria-labelledby="h-how">
+      <h2 id="h-how">How it works</h2>
+      <p>Moodle has an API that its mobile app uses. During setup you log in once in your browser, and a small helper saves the key Moodle gives back. After that, a script on your Mac fetches your deadlines, pages and files, and your AI agent turns them into a proper answer.</p>
+      <div class="flow" aria-hidden="true">
+        <div class="node"><b>Moodle</b><span>courses, briefs, grades</span></div>
+        <div class="arrow">→</div>
+        <div class="node"><b>Your Mac</b><span>moodle.py and your key in Keychain</span></div>
+        <div class="arrow">→</div>
+        <div class="node"><b>Your AI agent</b><span>reads it and answers you</span></div>
+      </div>
+      <p>It never sees your password, and the script refuses anything that would change something on Moodle. That's enforced in the code, not just in the instructions.</p>
+    </section>
+
+    <section class="sec" id="access" aria-labelledby="h-access">
+      <h2 id="h-access">What it can access</h2>
+      <div class="cols">
+        <div>
+          <h3>Reads from Moodle</h3>
+          <ul>
+            <li>Courses and week pages</li>
+            <li>Deadlines and submission status</li>
+            <li>Briefs, slides and files</li>
+            <li>Announcements</li>
+            <li>Grades and feedback</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Never</h3>
+          <ul>
+            <li>Submits or uploads</li>
+            <li>Posts or replies</li>
+            <li>Marks anything as done</li>
+            <li>Changes settings</li>
+            <li>Asks for your password</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Adds to your Mac</h3>
+          <ul>
+            <li><code>~/read-moodle-skill</code></li>
+            <li>The commands, in your agent's skills folder</li>
+            <li><code>MoodleKey.app</code>, built locally</li>
+            <li>Your Moodle key, in Keychain</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note">Notion and your calendar are only used if you set them up. No servers, accounts or tracking.</p>
+    </section>
+
+    <section class="sec" aria-labelledby="h-fine">
+      <h2 id="h-fine">Before you install</h2>
+      <ol class="fine">
+        <li>I've only tested it on UCL Moodle. Other Moodle sites may work if they allow the Moodle app.</li>
+        <li>It's Mac only for now.</li>
+        <li>Chat apps like the ChatGPT or Claude websites can't run it, because they can't run anything on your Mac. You need an agent that can, such as Claude Code or Codex.</li>
+        <li>If UCL turns off access for the Moodle app, this stops working too.</li>
+      </ol>
+    </section>
+
+    <section class="sec" aria-labelledby="h-help">
+      <h2 id="h-help">Help</h2>
+      <div class="help">
+        <div>
+          <h3>If something breaks</h3>
+          <p>Run <code>python3 -I ~/read-moodle-skill/moodle.py doctor</code>. It checks each part and tells you what to fix. After a password change, run it with <code>login</code> instead.</p>
+        </div>
+        <div>
+          <h3>Update or remove</h3>
+          <p>Update with <code>git pull &amp;&amp; ./install.sh</code> in the folder. Remove with <code>./uninstall.sh</code>, then delete the folder.</p>
+        </div>
+      </div>
+      <p>Found a bug? <a href="https://github.com/Forrest404/read-moodle-skill/issues">Open an issue on GitHub</a>.</p>
+    </section>
+  </main>
+
+  <footer>
+    <span>Made by <a href="https://github.com/Forrest404">Forrest</a> · MIT licence</span>
+    <span>Not affiliated with UCL or Moodle.</span>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById("copy"), note = document.getElementById("copied");
+    btn.addEventListener("click", function () {
+      var text = document.getElementById("prompt").textContent;
+      function done(ok) {
+        btn.textContent = ok ? "Copied" : "Copy";
+        note.textContent = ok ? "" : "Couldn't copy. Select the text instead.";
+        if (ok) setTimeout(function () { btn.textContent = "Copy"; }, 1500);
+      }
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+      else done(false);
+    });
+  })();
+</script>
+</body>
+</html>
